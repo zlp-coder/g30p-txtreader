@@ -1,5 +1,5 @@
-#g30p阅读器
-
+g30p阅读器
+==
 Txt小说阅读器,不联网，没有广告，简单的自用版本。
 
 * 支持Txt阅读，PDF阅读，左右键盘翻页
@@ -10,11 +10,13 @@ Txt小说阅读器,不联网，没有广告，简单的自用版本。
 
 ![](https://github.com/zlp-coder/g30p-txtreader/blob/main/ui-demo.jpg)
 
-##Install
+Install
+==
 Win7 64位打包：
 [下载](https://github.com/zlp-coder/g30p-txtreader/blob/main/g30p-txtreader.zip)
 
-##Technologies
+Technologies
+==
 * python3
 * pyqt5 
 
@@ -32,7 +34,8 @@ Argument：-m PyQt5.uic.pyuic $FileName$ -o ../$FileNameWithoutExtension$.py
 Working directory：$FileDir$
 ```
 
-##Interpreter
+Interpreter
+==
 
 * PyMuPDF	1.18.17	1.18.19
 * PyQt5	5.15.4	5.15.4
