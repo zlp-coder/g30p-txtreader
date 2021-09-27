@@ -128,7 +128,7 @@ class mainwindow_c(QtWidgets.QMainWindow):
             self.scene = QGraphicsScene()
 
             pdfResize = self.readConfig("PdfResize")
-            if pdfResize.isspace():
+            if pdfResize.isspace() or pdfResize == None:
                 self.mPdfResize = 1.2
                 self.writeConfig("PdfResize" , "1.2")
             else:
