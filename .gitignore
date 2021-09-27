@@ -3,3 +3,4 @@ dist
 __pycache__
 build
 env
+g30p-txtreader.db
