@@ -6,6 +6,7 @@ Txt小说阅读器,不联网，没有广告，简单的自用版本。
 * Txt的阅读界面支持 Style 配置
 * 支持浏览 zip 包中的文件，可以用来看漫画 
 * 自动记录阅读进度
+* 支持批注
 
 
 ![](https://github.com/zlp-coder/g30p-txtreader/blob/main/ui-demo.jpg)
@@ -19,6 +20,7 @@ Technologies
 ==
 * python3
 * pyqt5 
+* sqlite
 
 启动脚本 g30p-txtreader.py
 
