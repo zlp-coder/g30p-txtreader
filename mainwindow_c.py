@@ -8,10 +8,10 @@ from tkinter import Image
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtGui import QIcon, QFont, QKeyEvent, QKeySequence, QImage, QPixmap, QColor, QCursor, QTextCursor, \
-    QWheelEvent
+    QWheelEvent, QMovie
 from PyQt5.QtWidgets import QApplication, QMessageBox, QTableWidgetItem, QAction, QTextEdit, QLabel, QFileDialog, \
     QVBoxLayout, QGraphicsScene, QMenu, QSpacerItem, QSizePolicy, QPushButton, QGraphicsItem
-from PyQt5.QtCore import Qt, QTimer, QPoint
+from PyQt5.QtCore import Qt, QTimer, QPoint, QIODevice
 from pip._vendor import chardet
 
 import dialoglist
@@ -28,7 +28,7 @@ import fitz
 import zipfile
 import cv2
 import numpy
-
+from tempfile import NamedTemporaryFile
 
 from dialogcfg_c import dialogcfg_c
 from dialoglist_c import dialoglist_c
@@ -59,6 +59,8 @@ class mainwindow_c(QtWidgets.QMainWindow):
 
     mImageX = 0.1
     mImageY = 0.1
+
+    tmpFile = None
 
     mReadStyle = "background-color: rgb(233, 250, 255);color: rgb(85, 85, 85);font-family: Microsoft YaHei;font-size: 15px; letter-spacing: 0.2em;line-height:150%;"
 
@@ -128,14 +130,14 @@ class mainwindow_c(QtWidgets.QMainWindow):
             self.scene = QGraphicsScene()
 
             pdfResize = self.readConfig("PdfResize")
-            if pdfResize.isspace() or pdfResize == None:
+            if pdfResize == None or pdfResize.isspace():
                 self.mPdfResize = 1.2
                 self.writeConfig("PdfResize" , "1.2")
             else:
                 self.mPdfResize = float(pdfResize)
 
             imageResize = self.readConfig("ImageResize")
-            if imageResize.isspace():
+            if imageResize==None or imageResize.isspace():
                 self.mImageResize = 1.0
                 self.writeConfig("ImageResize" , "1.2")
             else:
@@ -372,8 +374,22 @@ class mainwindow_c(QtWidgets.QMainWindow):
                 else:
                     self.encoding="UTF-8"
 
+            isOpen = False
             if len(res) == 0:
+                isOpen = True
+            else:
+                 lr = QMessageBox.information(self,"Reading","打开的文件已经有阅读记录，是否清除阅读记录，重新阅读？",QMessageBox.Yes | QMessageBox.No)
+                 if lr == QMessageBox.Yes:
+                     sqlDelBook = "Delete from book_list where book_name ='{}'" \
+                         .format(fshortname)
+                     self.conn.execute(sqlDelBook)
+                     self.conn.commit()
+                     isOpen = True
 
+                 else:
+                     isOpen = False
+
+            if isOpen:
                 if str.lower(ftype) == ".txt":
                     with codecs.open(fname, mode='rb') as f:
                         self.book_data = f.readlines()
@@ -729,38 +745,52 @@ class mainwindow_c(QtWidgets.QMainWindow):
                 bmp_name = z.namelist()[self.mLines - 1]
                 bmp_type = str.lower(os.path.splitext(bmp_name)[1])
 
-                if bmp_type != ".bmp" and bmp_type != ".jpeg" and bmp_type != ".jpg" and bmp_type != ".jpeg":
+                if bmp_type != ".bmp" and bmp_type != ".jpeg" and bmp_type != ".jpg" \
+                        and bmp_type != ".gif":
                     self.mLines_prev = self.mLines
                     self.mLines += 1
                     self.loadBook(self.mLines)
                     return
 
-                content = z.read(bmp_name)
-                img = cv2.imdecode( numpy.array(bytearray(content)), cv2.COLOR_RGBA2BGR)
+                if bmp_type == ".gif":
+                    self.ui.graphicsView.hide()
+                    self.ui.txtMovie.show()
+                    self.ui.txtMovie.resize(self.ui.graphicsView.size() )
 
-                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                    filedata = z.read(bmp_name)
 
-                height, width = img.shape[:2]
-                size = (int(width * self.mImageResize), int(height *  self.mImageResize))
-                img = cv2.resize(img , size)
+                    self.tmpFile = NamedTemporaryFile('w+b', delete=False)
+                    self.tmpFile.write(filedata)
+                    self.tmpFile.close()
 
-                qimage = QImage(img[:],img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
-                qimage2 = QPixmap.fromImage(qimage)
+                    self.gif = QMovie(self.tmpFile.name)
+                    self.ui.txtMovie.setMovie(self.gif)
+                    self.gif.start()
 
-                #image = QImage.fromData(content)
+                else:
+                    self.ui.graphicsView.show()
+                    self.ui.txtMovie.hide()
 
-                # image = image((newwidth, newheight), Image.ANTIALIAS)
+                    content = z.read(bmp_name)
+                    img = cv2.imdecode( numpy.array(bytearray(content)), cv2.COLOR_RGBA2BGR)
 
-                #qimage2 =QPixmap.fromImage(image)
+                    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-                self.scene = QGraphicsScene()
-                o = self.scene.addPixmap(qimage2)
-                o.setFlags(QGraphicsItem.ItemIsMovable)
+                    height, width = img.shape[:2]
+                    size = (int(width * self.mImageResize), int(height *  self.mImageResize))
+                    img = cv2.resize(img , size)
 
-                self.mImageXStep = size[0] / 100
-                self.mImageYStep = size[1] / 100
+                    qimage = QImage(img[:],img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
+                    qimage2 = QPixmap.fromImage(qimage)
 
-                self.ui.graphicsView.setScene(self.scene)
+                    self.scene = QGraphicsScene()
+                    o = self.scene.addPixmap(qimage2)
+                    o.setFlags(QGraphicsItem.ItemIsMovable)
+
+                    self.mImageXStep = size[0] / 100
+                    self.mImageYStep = size[1] / 100
+
+                    self.ui.graphicsView.setScene(self.scene)
 
                 self.mLines_end = firstlines
                 self.statusMessage.setText("{} ({}/{})".format(self.mFname, self.mLines, self.mAllLines))
@@ -836,7 +866,6 @@ class mainwindow_c(QtWidgets.QMainWindow):
 
                     if str.lower(self.mFtype) == ".pdf" or str.lower(self.mFtype) == ".epub":
                         self.book_data = fitz.open(fname)
-                        #count = self.book_data.pageCount
 
                     self.loadBook(self.mLines)
         except Exception as ex:
@@ -1026,3 +1055,7 @@ class mainwindow_c(QtWidgets.QMainWindow):
         else:
             base_path = os.path.abspath(".")
         return os.path.join(base_path, relative_path)
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        super().closeEvent(a0)
+

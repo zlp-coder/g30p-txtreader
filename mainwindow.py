@@ -38,6 +38,15 @@ class Ui_MainWindow(object):
         self.graphicsView.setGeometry(QtCore.QRect(0, 0, 781, 461))
         self.graphicsView.setAutoFillBackground(True)
         self.graphicsView.setObjectName("graphicsView")
+        self.txtMovie = QtWidgets.QLabel(self.page_2)
+        self.txtMovie.setGeometry(QtCore.QRect(0, 0, 331, 251))
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.txtMovie.sizePolicy().hasHeightForWidth())
+        self.txtMovie.setSizePolicy(sizePolicy)
+        self.txtMovie.setAlignment(QtCore.Qt.AlignCenter)
+        self.txtMovie.setObjectName("txtMovie")
         self.stackedWidget.addWidget(self.page_2)
         self.horizontalLayout.addWidget(self.stackedWidget)
         MainWindow.setCentralWidget(self.centralWidget)
@@ -56,4 +65,5 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.txtMovie.setText(_translate("MainWindow", "TextLabel"))
         self.action_open.setText(_translate("MainWindow", "open"))
